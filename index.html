@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Summarizer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="static\style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1><i class="fas fa-microphone-alt"></i> AI Meeting Summarizer</h1>
+            <p>Automatically generate summaries and extract action items from your meetings</p>
+        </header>
+
+        <main>
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="record">Record Meeting</button>
+                <button class="tab-btn" data-tab="upload">Upload Audio</button>
+                <button class="tab-btn" data-tab="text">Input Text</button>
+            </div>
+
+            <div class="tab-content">
+                <!-- Record Meeting Tab -->
+                <div class="tab-pane active" id="record-tab">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Record Your Meeting</h2>
+                        </div>
+                        <div class="card-body">
+                            <div id="recording-controls">
+                                <div id="time-display">00:00</div>
+                                <div class="record-btn-group">
+                                    <button id="start-recording" class="btn primary"><i class="fas fa-microphone"></i> Start Recording</button>
+                                    <button id="stop-recording" class="btn danger" disabled><i class="fas fa-stop-circle"></i> Stop Recording</button>
+                                </div>
+                                <div id="recording-status">
+                                    <div class="recording-indicator hidden"></div>
+                                    <span id="status-text">Ready to record</span>
+                                </div>
+                            </div>
+                            <div id="live-transcript-container" class="hidden">
+                                <h3>Live Transcription</h3>
+                                <div id="live-transcript" class="transcript-box"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Audio Tab -->
+                <div class="tab-pane" id="upload-tab">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Upload Audio File</h2>
+                        </div>
+                        <div class="card-body">
+                            <form id="upload-form">
+                                <div class="file-upload-container">
+                                    <label for="audio-file" class="file-upload-label">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        <span>Choose or drop a file</span>
+                                    </label>
+                                    <input type="file" id="audio-file" accept="audio/*" class="file-upload-input">
+                                    <div id="file-name" class="file-name"></div>
+                                </div>
+                                <button type="submit" class="btn primary" id="upload-btn">
+                                    <i class="fas fa-upload"></i> Upload & Process
+                                </button>
+                            </form>
+                            <div class="upload-progress hidden">
+                                <div class="progress-bar">
+                                    <div class="progress-fill"></div>
+                                </div>
+                                <span class="progress-text">Uploading: 0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Text Tab -->
+                <div class="tab-pane" id="text-tab">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Analyze Meeting Transcript</h2>
+                        </div>
+                        <div class="card-body">
+                            <form id="text-form">
+                                <div class="form-group">
+                                    <label for="transcript-text">Paste your meeting transcript:</label>
+                                    <textarea id="transcript-text" rows="10" placeholder="Paste your meeting transcript here..."></textarea>
+                                </div>
+                                <button type="submit" class="btn primary" id="analyze-text-btn">
+                                    <i class="fas fa-search"></i> Analyze Text
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section (Hidden initially) -->
+            <div id="results-section" class="hidden">
+                <div class="card results-card">
+                    <div class="card-header">
+                        <h2>Meeting Summary</h2>
+                        <div class="card-actions">
+                            <button id="export-btn" class="btn secondary">
+                                <i class="fas fa-download"></i> Export
+                            </button>
+                            <div id="export-dropdown" class="dropdown hidden">
+                                <button class="dropdown-item" data-format="markdown">Markdown</button>
+                                <button class="dropdown-item" data-format="text">Plain Text</button>
+                                <button class="dropdown-item" data-format="html">HTML</button>
+                                <button class="dropdown-item" data-format="json">JSON</button>
+                                <button class="dropdown-item" data-format="csv">CSV</button>
+                            </div>
+                            <button id="export-custom-btn" class="btn secondary">
+                                <i class="fas fa-cogs"></i> Custom Export
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="tabs results-tabs">
+                            <button class="tab-btn active" data-result-tab="summary">Summary</button>
+                            <button class="tab-btn" data-result-tab="key-points">Key Points</button>
+                            <button class="tab-btn" data-result-tab="decisions">Decisions</button>
+                            <button class="tab-btn" data-result-tab="action-items">Action Items</button>
+                            <button class="tab-btn" data-result-tab="transcript">Transcript</button>
+                        </div>
+                        
+                        <div class="result-tab-content">
+                            <!-- Summary Tab -->
+                            <div class="result-tab-pane active" id="summary-tab">
+                                <div id="summary-content" class="result-content"></div>
+                            </div>
+                            
+                            <!-- Key Points Tab -->
+                            <div class="result-tab-pane" id="key-points-tab">
+                                <div id="key-points-content" class="result-content"></div>
+                            </div>
+                            
+                            <!-- Decisions Tab -->
+                            <div class="result-tab-pane" id="decisions-tab">
+                                <div id="decisions-content" class="result-content"></div>
+                            </div>
+                            
+                            <!-- Action Items Tab -->
+                            <div class="result-tab-pane" id="action-items-tab">
+                                <div id="action-items-content" class="result-content"></div>
+                                <div class="export-actions">
+                                    <button id="export-tasks-btn" class="btn secondary">
+                                        <i class="fas fa-tasks"></i> Export to Task Manager
+                                    </button>
+                                    <div id="task-manager-dropdown" class="dropdown hidden">
+                                        <button class="dropdown-item" data-system="trello">Trello</button>
+                                        <button class="dropdown-item" data-system="asana">Asana</button>
+                                        <button class="dropdown-item" data-system="jira">Jira</button>
+                                        <button class="dropdown-item" data-system="github">GitHub</button>
+                                        <button class="dropdown-item" data-system="notion">Notion</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Transcript Tab -->
+                            <div class="result-tab-pane" id="transcript-tab">
+                                <div id="transcript-content" class="result-content transcript-box"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 AI Meeting Summarizer | <a href="#" id="about-link">About</a></p>
+        </footer>
+    </div>
+
+    <!-- Modal for task manager credentials -->
+    <div id="credentials-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Enter Credentials</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="credentials-form">
+                    <div id="credential-fields"></div>
+                    <div class="form-actions">
+                        <button type="button" class="btn secondary" id="cancel-credentials">Cancel</button>
+                        <button type="submit" class="btn primary">Export Tasks</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for custom export options -->
+    <div id="custom-export-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Custom Export Options</h2>
+                <button class="close-custom-export-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="custom-export-form">
+                    <div class="form-group">
+                        <label>Sections to Include:</label>
+                        <div>
+                            <label><input type="checkbox" name="sections" value="summary" checked> Summary</label>
+                            <label><input type="checkbox" name="sections" value="key_points" checked> Key Points</label>
+                            <label><input type="checkbox" name="sections" value="decisions" checked> Decisions</label>
+                            <label><input type="checkbox" name="sections" value="action_items" checked> Action Items</label>
+                            <label><input type="checkbox" name="sections" value="participants" checked> Participants</label>
+                            <label><input type="checkbox" name="sections" value="transcript" checked> Transcript</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Style:</label>
+                        <div>
+                            <label><input type="radio" name="style" value="minimal" checked> Minimal</label>
+                            <label><input type="radio" name="style" value="detailed"> Detailed</label>
+                            <label><input type="radio" name="style" value="business"> Business</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="date_format">Date Format:</label>
+                        <input type="text" id="date_format" name="date_format" value="%Y-%m-%d %H:%M">
+                    </div>
+                    <div class="form-group">
+                        <label><input type="checkbox" name="include_timestamps" checked> Include Timestamps</label>
+                    </div>
+                    <div class="form-group">
+                        <label>Action Item Format:</label>
+                        <div>
+                            <label><input type="radio" name="action_item_format" value="simple" checked> Simple</label>
+                            <label><input type="radio" name="action_item_format" value="detailed"> Detailed</label>
+                            <label><input type="radio" name="action_item_format" value="kanban"> Kanban</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="highlight_terms">Highlight Terms (comma-separated):</label>
+                        <input type="text" id="highlight_terms" name="highlight_terms">
+                    </div>
+                    <div class="form-group">
+                        <label for="sort_action_items_by">Sort Action Items By:</label>
+                        <select id="sort_action_items_by" name="sort_action_items_by">
+                            <option value="">None</option>
+                            <option value="assignee">Assignee</option>
+                            <option value="status">Status</option>
+                            <option value="created">Created</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="max_transcript_length">Max Transcript Length (0 for full):</label>
+                        <input type="number" id="max_transcript_length" name="max_transcript_length" value="0">
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn secondary" id="cancel-custom-export">Cancel</button>
+                        <button type="submit" class="btn primary">Export</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="hidden">
+        <div class="spinner"></div>
+        <p id="loading-text">Processing your meeting...</p>
+    </div>
+
+    <script src="static/app.js"></script>
+    <script>
+        document.getElementById('export-tasks-btn').addEventListener('click', function() {
+            var dropdown = document.getElementById('task-manager-dropdown');
+            dropdown.classList.toggle('hidden');
+        });
+    </script>
+</body>
+</html>
